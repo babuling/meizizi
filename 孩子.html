@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>我的积分</title>
+<style>
+    *{margin:0;padding:0;box-sizing:border-box;}
+    body{font-family:"微软雅黑",sans-serif;background:#f0f8ff;padding:15px;}
+    .container{max-width:800px;margin:0 auto;background:#fff;border-radius:12px;padding:20px;box-shadow:0 0 15px #cceeff;}
+    .title{text-align:center;color:#2c6ed5;font-size:24px;margin-bottom:10px;}
+    .info{text-align:center;color:#666;margin-bottom:15px;}
+    .login-box{max-width:400px;margin:80px auto;text-align:center;}
+    .login-box input{width:260px;padding:10px;font-size:16px;border:1px solid #ccc;border-radius:6px;margin:15px 0;}
+    .login-btn{padding:10px 25px;background:#2c6ed5;color:#fff;border:none;border-radius:6px;cursor:pointer;font-size:16px;}
+    .total-box{text-align:center;background:#e6f7ff;padding:20px;border-radius:12px;margin:20px 0;}
+    .total-score{font-size:32px;font-weight:bold;color:#2c6ed5;}
+    .today-box{background:#fff5e8;padding:15px;border-radius:10px;text-align:center;margin:15px 0;}
+    .record{background:#f9f9f9;padding:10px;margin:8px 0;border-radius:6px;border-left:4px solid #2c6ed5;}
+    .main-page{display:none;}
+</style>
+</head>
+<body>
+
+<div class="login-box" id="loginPage">
+    <h2>我的积分</h2>
+    <input type="password" id="pwd" placeholder="查看密码">
+    <br>
+    <button class="login-btn" onclick="login()">登录查看</button>
+    <p style="margin-top:10px;color:#999">密码：child123</p>
+</div>
+
+<div class="main-page" id="mainPage">
+    <div class="container">
+        <div class="title">梅姿的积分</div>
+        <div class="info">8岁｜兴仁市城南小学 二年级（6）班</div>
+        <div class="total-box">
+            <div>🏆 我的总积分</div>
+            <div class="total-score" id="allScore">0</div>
+        </div>
+        <div class="today-box">
+            <div>📅 今日积分</div>
+            <div style="font-size:22px;font-weight:bold;margin-top:5px;" id="todayScore">0</div>
+        </div>
+        <div style="margin-top:20px;">
+            <h3 style="margin-bottom:10px;">📜 今日记录</h3>
+            <div id="todayRecord"></div>
+        </div>
+    </div>
+</div>
+
+<script>
+const PASSWORD = "child123";
+
+function login(){
+    if(document.getElementById("pwd").value === PASSWORD){
+        document.getElementById("loginPage").style.display="none";
+        document.getElementById("mainPage").style.display="block";
+        loadData();
+    }else{
+        alert("密码错误");
+    }
+}
+
+function loadData(){
+    const today = new Date();
+    const dateStr = `${today.getFullYear()}-${String(today.getMonth()+1).padStart(2,0)}-${String(today.getDate()).padStart(2,0)}`;
+    const data = JSON.parse(localStorage.getItem("score_"+dateStr)||'{"add":[],"minus":[],"free":[]}');
+    
+    let add = data.add.reduce((a,b)=>a+b,0);
+    let minus = data.minus.reduce((a,b)=>a+b,0);
+    data.free.forEach(i=>i.type==="add"?add+=i.score:minus+=i.score);
+    document.getElementById("todayScore").innerText = add-minus;
+
+    let all = 0;
+    for(let i=0;i<localStorage.length;i++){
+        const key = localStorage.key(i);
+        if(key.startsWith("score_")){
+            const d = JSON.parse(localStorage.getItem(key));
+            let a = d.add.reduce((x,y)=>x+y,0);
+            let m = d.minus.reduce((x,y)=>x+y,0);
+            d.free.forEach(j=>j.type==="add"?a+=j.score:m+=j.score);
+            all+=a-m;
+        }
+    }
+    document.getElementById("allScore").innerText = all;
+
+    let html="";
+    data.add.forEach(i=>html+=`<div class="record">✅ +${i} 分</div>`);
+    data.minus.forEach(i=>html+=`<div class="record" style="border-color:red;color:red">❌ -${i} 分</div>`);
+    data.free.forEach(i=>html+=`<div class="record" style="border-color:${i.type==='add'?'blue':'red'};color:${i.type==='add'?'blue':'red'}">${i.type==='add'?'➕':'➖'} ${i.score} 分（${i.reason}）</div>`);
+    document.getElementById("todayRecord").innerHTML = html||"<div style='text-align:center;color:#999'>今日暂无记录</div>";
+}
+</script>
+</body>
+</html>
